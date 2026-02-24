@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>GRUB MAUL LING - OMEGA SINGULARITY</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+:root{
+--bg:#050510;
+--card:#0d0d1a;
+--neon:#00f0ff;
+--gold:gold;
+--text:#ffffff;
+}
+
+body{
+margin:0;
+font-family:Consolas, monospace;
+background:radial-gradient(circle at center,#0a0a1f,#000);
+color:var(--text);
+overflow-x:hidden;
+}
+
+/* Matrix Background */
+canvas#matrix{
+position:fixed;
+top:0;
+left:0;
+z-index:-1;
+}
+
+/* Layout */
+.card{
+background:rgba(0,0,0,0.7);
+backdrop-filter:blur(8px);
+border:1px solid var(--neon);
+box-shadow:0 0 20px var(--neon);
+padding:20px;
+margin:20px auto;
+max-width:600px;
+border-radius:12px;
+text-align:center;
+}
+
+h1{
+color:var(--neon);
+text-shadow:0 0 15px var(--neon);
+}
+
+input,select{
+padding:10px;
+margin:8px;
+width:220px;
+border-radius:6px;
+border:none;
+}
+
+button{
+padding:10px 18px;
+margin:8px;
+border:none;
+border-radius:6px;
+background:var(--neon);
+color:black;
+font-weight:bold;
+cursor:pointer;
+}
+
+#dashboard{display:none}
+#adminPanel{display:none}
+</style>
+</head>
+
+<body>
+
+<canvas id="matrix"></canvas>
+
+<div class="card" id="auth">
+<h1>OMEGA SINGULARITY CORE</h1>
+<p>CEO: MAULANA AR ROSYID</p>
+<input type="text" id="username" placeholder="Username"><br>
+<input type="password" id="password" placeholder="Password"><br>
+<select id="role">
+<option>Customer</option>
+<option>Investor</option>
+<option>Admin</option>
+</select><br>
+<button onclick="register()">Register</button>
+<button onclick="login()">Login</button>
+</div>
+
+<div id="dashboard">
+
+<div class="card">
+<h2>Welcome <span id="userDisplay"></span></h2>
+<p id="roleDisplay"></p>
+<p id="premiumStatus"></p>
+</div>
+
+<div class="card">
+<h3>🧠 Quantum AI Assistant</h3>
+<div id="chatBox"></div>
+<input type="text" id="aiInput">
+<button onclick="sendAI()">Send</button>
+</div>
+
+<div class="card">
+<h3>🏦 Digital Finance Core</h3>
+<p>Balance: $<span id="balance"></span></p>
+<input type="number" id="transferAmount" placeholder="Transfer">
+<button onclick="transfer()">Execute</button>
+</div>
+
+<div class="card">
+<h3>📊 Empire Quantum Growth</h3>
+<canvas id="chart"></canvas>
+</div>
+
+<div class="card" id="adminPanel">
+<h3>👑 Omega Admin Control</h3>
+<p>Total Users: <span id="totalUsers"></span></p>
+</div>
+
+<button onclick="upgrade()">Upgrade Premium</button>
+<button onclick="logout()">Shutdown</button>
+
+</div>
+
+<script>
+/* Matrix Animation */
+const canvas=document.getElementById("matrix")
+const ctx=canvas.getContext("2d")
+canvas.height=window.innerHeight
+canvas.width=window.innerWidth
+let letters="01"
+letters=letters.split("")
+let fontSize=14
+let columns=canvas.width/fontSize
+let drops=[]
+for(let x=0;x<columns;x++)drops[x]=1
+function draw(){
+ctx.fillStyle="rgba(0,0,0,0.05)"
+ctx.fillRect(0,0,canvas.width,canvas.height)
+ctx.fillStyle="#00f0ff"
+ctx.font=fontSize+"px monospace"
+for(let i=0;i<drops.length;i++){
+let text=letters[Math.floor(Math.random()*letters.length)]
+ctx.fillText(text,i*fontSize,drops[i]*fontSize)
+if(drops[i]*fontSize>canvas.height&&Math.random()>0.975)drops[i]=0
+drops[i]++
+}
+}
+setInterval(draw,33)
+
+/* User System */
+function getUsers(){return JSON.parse(localStorage.getItem("users"))||[]}
+function saveUsers(u){localStorage.setItem("users",JSON.stringify(u))}
+
+function register(){
+let u=username.value,p=password.value,r=role.value
+if(!u||!p)return alert("Complete fields")
+let users=getUsers()
+if(users.find(x=>x.username===u))return alert("User exists")
+users.push({username:u,password:p,role:r,premium:false,balance:5000})
+saveUsers(users)
+alert("User Created ($5000 Balance)")
+}
+
+function login(){
+let u=username.value,p=password.value
+let user=getUsers().find(x=>x.username===u&&x.password===p)
+if(!user)return alert("Access Denied")
+localStorage.setItem("activeUser",JSON.stringify(user))
+loadDashboard(user)
+}
+
+function loadDashboard(user){
+auth.style.display="none"
+dashboard.style.display="block"
+userDisplay.innerText=user.username
+roleDisplay.innerText="Role: "+user.role
+premiumStatus.innerText=user.premium?"Premium":"Standard"
+balance.innerText=user.balance
+
+if(user.role==="Admin"){
+adminPanel.style.display="block"
+totalUsers.innerText=getUsers().length
+}
+
+new Chart(document.getElementById("chart"),{
+type:"line",
+data:{
+labels:["2022","2023","2024","2025","2026"],
+datasets:[{
+label:"Quantum Value ($B)",
+data:[5,12,20,35,60],
+borderColor:"#00f0ff"
+}]
+}
+})
+}
+
+function transfer(){
+let active=JSON.parse(localStorage.getItem("activeUser"))
+let amount=parseInt(transferAmount.value)
+if(amount>active.balance)return alert("Insufficient Balance")
+active.balance-=amount
+balance.innerText=active.balance
+let users=getUsers().map(u=>{
+if(u.username===active.username)u.balance=active.balance
+return u
+})
+saveUsers(users)
+localStorage.setItem("activeUser",JSON.stringify(active))
+}
+
+function upgrade(){
+let active=JSON.parse(localStorage.getItem("activeUser"))
+active.premium=true
+premiumStatus.innerText="Premium"
+let users=getUsers().map(u=>{
+if(u.username===active.username)u.premium=true
+return u
+})
+saveUsers(users)
+localStorage.setItem("activeUser",JSON.stringify(active))
+}
+
+function logout(){
+localStorage.removeItem("activeUser")
+location.reload()
+}
+
+function sendAI(){
+let input=aiInput.value
+let reply="AI: "
+if(input.includes("market"))reply+="Market dominance at 87%."
+else if(input.includes("growth"))reply+="Exponential quantum expansion."
+else reply+="Omega Core Online."
+chatBox.innerHTML+="<p><b>You:</b> "+input+"</p>"
+chatBox.innerHTML+="<p>"+reply+"</p>"
+aiInput.value=""
+}
+
+window.onload=function(){
+let active=JSON.parse(localStorage.getItem("activeUser"))
+if(active)loadDashboard(active)
+}
+</script>
+
+</body>
+</html>
